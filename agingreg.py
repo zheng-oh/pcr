@@ -76,28 +76,37 @@ def test(model, device, test_loader, criterion, epoch, writer):
     model.eval()
     total_loss = 0.0
     correct = 0.0
+    totel_test = 0.0
+    best_model = ''
+    best_accuract = 0.0
+    best_epoch = 0
     with torch.no_grad():
-        for data, target in test_loader:
+        for batch_id, (data, target) in enumerate(test_loader):
+        # for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
             total_loss += criterion(output, target).item()
             _, preds = torch.max(output, dim=1)
             correct += torch.sum(preds == target)
-        total_loss /= len(test_loader)
-        accuracy = correct / len(test_loader)
+            totel_test += len(target)
+        # total_loss /= totel_test
+        accuracy = correct / totel_test
         writer.add_scalar("Test loss", total_loss, epoch)
         writer.add_scalar("Accuracy", accuracy, epoch)
         writer.flush()
         print("Test Loss:{:.4f},Accuracy:{:.4f}".format(total_loss, accuracy))
-
+        if accuracy>best_accuract:
+            best_model = model
+            best_accuract = accuracy
+            best_epoch = epoch
 
 def main():
     writer = SummaryWriter("./logs")
     input_size = 28
     num_classes = 10
-    num_epochs = 10
+    num_epochs = 100
     batch_size = 8
-    device = torch.device("gpu" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data_transforms = {
         "train": transforms.Compose(
             [
@@ -109,7 +118,7 @@ def main():
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ]
         ),
         "valid": transforms.Compose(
@@ -117,15 +126,25 @@ def main():
                 transforms.Resize(250),
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ]
         ),
     }
-    data_path = "./data/ie"
-    image_datasets = {
-        x: datasets.ImageFolder(os.path.join(data_path, x), data_transforms[x])
-        for x in ["train", "valid"]
-    }
+    data_path = "./data/oe"
+    # image_datasets = {        x: datasets.ImageFolder(os.path.join(data_path, x), data_transforms[x])
+    #     for x in ["train", "valid"]
+    # }
+    # dataloaders = {
+    #     x: torch.utils.data.DataLoader(
+    #         dataset=image_datasets[x], batch_size=batch_size, shuffle=True
+    #     )
+    #     for x in ["train", "valid"]
+    # }
+    # data_size = {x: len(image_datasets[x]) for x in ["train", "valid"]}
+    all_datasets = datasets.ImageFolder(os.path.join(data_path, "train"),data_transforms['train'])
+    print(len(all_datasets))
+    image_datasets={}
+    image_datasets["train"], image_datasets["valid"] = torch.utils.data.random_split(all_datasets, [160,32])
     dataloaders = {
         x: torch.utils.data.DataLoader(
             dataset=image_datasets[x], batch_size=batch_size, shuffle=True
@@ -133,20 +152,23 @@ def main():
         for x in ["train", "valid"]
     }
     data_size = {x: len(image_datasets[x]) for x in ["train", "valid"]}
-    print(data_size)
-    target_names = image_datasets["train"].classes
+    # target_names = image_datasets["train"].classes
     images, targets = next(iter(dataloaders["train"]))
-    # writer.add_images("chenpi", images)
-    # writer.flush()
-    out = make_grid(images, nrow=4, padding=10)
+    print(targets)
+    writer.add_images("chenpi", images)
+    writer.flush()
+    # out = make_grid(images, nrow=4, padding=10)
     # img_show(out, title=[target_names[x] for x in targets])
     # show(out)
 
-    model = get_model()
+    model = get_model().to(device)
     # 优化器
     optim_fit = torch.optim.Adam(model.parameters())
-    scheduler = torch.optim.lr_scheduler.StepLR(optim_fit, step_size=8, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optim_fit, step_size=10, gamma=0.1)
     criterion = nn.NLLLoss()
+    print(len(dataloaders['train']))
+
+    print(len(dataloaders['valid']))
     for epoch in range(num_epochs):
         print("训练迭代：%d" % epoch)
         train(model, device, dataloaders["train"], criterion, optim_fit, epoch, writer)
