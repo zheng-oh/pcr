@@ -72,7 +72,6 @@ class Test:
         self.model.eval()
         correct = 0.0
         total_loss = 0.0
-        print("执行前")
         self.matrix = torch.zeros(self.num_classes, self.num_classes)  # 创建一个空矩阵存储混淆矩阵
         with torch.no_grad():
             for batch_id, (data, target) in enumerate(self.dataloaders):
@@ -86,7 +85,6 @@ class Test:
                 self.preds_list.extend(preds.cpu().numpy())
             self.test_loss += loss
             self.test_acc = correct / self.test_num
-            print("执行内")
             self.matrix = self.confusion_matrix(self.matrix)
             self.matrix = self.matrix.cpu()
             self.matrix = np.array(self.matrix)
@@ -100,8 +98,9 @@ class Test:
 
     def plt(self):
         p = Resultplt(self.num_classes, self.target_list, self.score_list, self.matrix, self.lables, self.test_acc)
-        p.roc("roc_{}".format(self.modelname))
-        p.conf_mat("matrix_{}".format(self.modelname))
+        # p.roc("roc_{}".format(self.modelname))
+        # p.conf_mat("matrix_{}".format(self.modelname))
+        p.max_roc("max_roc_{}".format(self.modelname))
 
     def run(self, modelname, dp, net_num):
         self.modelname = modelname
@@ -121,8 +120,9 @@ class Test:
 
 
 def main():
-    model_name = "agingregin18ie"
-    dp = "./data/test/agingreginIE"
+    # model_name = "agingregin18ie"
+    model_name = "CK18"
+    dp = "./data/test/agingIE/CK"
     net_num = 18 if "18" in model_name else 50
     t = Test()
     t.run(model_name, dp, net_num)

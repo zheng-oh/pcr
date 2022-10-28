@@ -16,21 +16,23 @@ class Resultplt:
         self.lables = lables
         self.test_acc = test_acc
 
-    def conf_mat(self, name):
+    def conf_mat(self, plot):
             # def confusion_matrix(preds, labels, conf_matrix):
-        plt.figure(figsize=(16, 10))
+        # plt.figure(figsize=(16, 10))
 
-        plt.imshow(self.matrix, cmap=plt.cm.Blues)
+        # plot.imshow(self.matrix, cmap=plt.cm.Blues)
+        kk = plot.imshow(self.matrix, cmap=plt.cm.Blues)
         # 设置x轴坐标label
-        plt.xticks([i for i in range(self.n_classes)], self.lables, rotation=45)
+        plot.set_xticks([i for i in range(self.n_classes)], self.lables, rotation=45)
         # 设置y轴坐标label
-        plt.yticks([i for i in range(self.n_classes)], self.lables)
+        plot.set_yticks([i for i in range(self.n_classes)], self.lables)
         # 显示colorbar
-        plt.colorbar()
-        plt.xlabel('True Labels')
-        plt.ylabel('Predicted Labels')
+        # plot.colorbar()
+        plt.colorbar(kk, ax=plot)
+        plot.set_xlabel('True Labels')
+        plot.set_ylabel('Predicted Labels')
         # plt.title('Confusion matrix (acc='+self.summary()+')')
-        plt.title('Confusion matrix (acc={:.2f})'.format(self.test_acc))
+        plot.set_title('Confusion matrix (acc={:.2f})'.format(self.test_acc))
 
         # 在图中标注数量/概率信息
         thresh = self.matrix.max() / 2
@@ -38,14 +40,14 @@ class Resultplt:
             for y in range(self.n_classes):
                 # 注意这里的matrix[y, x]不是matrix[x, y]
                 info = int(self.matrix[y, x])
-                plt.text(x, y, info,
+                plot.text(x, y, info,
                          verticalalignment='center',
                          horizontalalignment='center',
                          color="white" if info > thresh else "black")
-        plt.tight_layout()
-        plt.savefig('./results/{}.pdf'.format(name))
+        # plot.set_tight_layout()
+        # plt.savefig('./results/{}.pdf'.format(name))
 
-    def roc(self, name):
+    def roc(self, plt):
         score_array = np.array(self.score_list)
         # 将label转换成onehot形式
         label_tensor = torch.tensor(self.label_list)
@@ -87,7 +89,7 @@ class Resultplt:
         roc_auc_dict["macro"] = auc(fpr_dict["macro"], tpr_dict["macro"])
 
         # 绘制所有类别平均的roc曲线
-        plt.figure(figsize=(16, 10))
+        # plt.figure(figsize=(16, 10))
         lw = 2
         plt.plot(fpr_dict["micro"], tpr_dict["micro"],
                  label='micro-average ROC curve (area = {0:0.2f})'
@@ -105,12 +107,23 @@ class Resultplt:
                      label='ROC curve of class {0} (area = {1:0.2f})'
                      ''.format(i, roc_auc_dict[i]))
         plt.plot([0, 1], [0, 1], 'k--', lw=lw)
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('Some extension of Receiver operating characteristic to multi-class')
+        plt.set_xlim([0.0, 1.0])
+        plt.set_ylim([0.0, 1.05])
+        plt.set_xlabel('False Positive Rate')
+        plt.set_ylabel('True Positive Rate')
+        plt.set_title('Some extension of Receiver operating characteristic to multi-class')
         plt.legend(loc="lower right")
+        # plt.savefig('./results/{}.pdf'.format(name))
+
+    def max_roc(self,name):
+        plt.figure(figsize=(16, 8))
+        plt.tight_layout()
+        ax1 = plt.subplot(122)
+        self.roc(ax1)
+        ax2 = plt.subplot(121)
+        # ax2.margins(2, 2)           # Values >0.0 zoom out
+        self.conf_mat(ax2)
+        print(self.matrix)
         plt.savefig('./results/{}.pdf'.format(name))
 
 
