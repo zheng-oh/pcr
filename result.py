@@ -55,16 +55,6 @@ class Resultplt:
         label_onehot = torch.zeros(label_tensor.shape[0], self.n_classes)
         label_onehot.scatter_(dim=1, index=label_tensor, value=1)
         label_onehot = np.array(label_onehot)
-        lw = 2
-        fpr = dict()
-        tpr = dict()
-        roc_auc = dict()
-        for i in range(self.n_classes):
-            fpr[i], tpr[i], _ = roc_curve(label_onehot[:,i], score_array[:,i])
-            roc_auc[i] = auc(fpr[i], tpr[i])
-        all_fpr = np.unique(np.concatenate([fpr[i] for i in range(self.n_classes)]))
-        # Then interpolate all ROC curves at this points
-        mean_tpr = np.zeros_like(all_fpr)
         fpr_dict = dict()
         tpr_dict = dict()
         roc_auc_dict = dict()
@@ -101,11 +91,11 @@ class Resultplt:
                  ''.format(roc_auc_dict["macro"]),
                  color='navy', linestyle=':', linewidth=4)
 
-        colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
+        colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'darkorchid'])
         for i, color in zip(range(self.n_classes), colors):
             plt.plot(fpr_dict[i], tpr_dict[i], color=color, lw=lw,
                      label='ROC curve of class {0} (area = {1:0.2f})'
-                     ''.format(i, roc_auc_dict[i]))
+                     ''.format(self.lables[i], roc_auc_dict[i]))
         plt.plot([0, 1], [0, 1], 'k--', lw=lw)
         plt.set_xlim([0.0, 1.0])
         plt.set_ylim([0.0, 1.05])

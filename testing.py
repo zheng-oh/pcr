@@ -78,11 +78,16 @@ class Test:
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model(data)
                 loss = self.criterion(output, target).item()
-                _, preds = torch.max(output, dim=1)
+                e_class, preds = torch.max(output, dim=1)
+                print(output)
+                print(output.shape)
+                print(e_class)
+                print(preds)
                 correct += torch.sum(preds == target)
                 self.score_list.extend(output.detach().cpu().numpy())
                 self.target_list.extend(target.cpu().numpy())
                 self.preds_list.extend(preds.cpu().numpy())
+                break
             self.test_loss += loss
             self.test_acc = correct / self.test_num
             self.matrix = self.confusion_matrix(self.matrix)
@@ -112,20 +117,26 @@ class Test:
         print(classes)
         self.pred()
         result = {"test_acc": self.test_acc, "test_loss": self.test_loss}
+        print("test_acc:{:.2f},test_loss{:.2f}".format(result["test_acc"], result["test_loss"]))
+        return
         if not os.path.exists("results"):
             os.mkdir("results")
         torch.save(result, "./results/{}.pkl".format(modelname))
-        print("test_acc:{:.2f},test_loss{:.2f}".format(result["test_acc"], result["test_loss"]))
         self.plt()
 
 
 def main():
-    # model_name = "agingregin18ie"
-    model_name = "CK18"
-    dp = "./data/test/agingIE/CK"
-    net_num = 18 if "18" in model_name else 50
-    t = Test()
-    t.run(model_name, dp, net_num)
+    # models = ["CK18", "CK50", "DZ18", "DZ50", "NT18", "NT50", "SJ18", "SJ50", "SS18", "SS50"]
+    # models = ["agingregin50ie", "agingregin18ie"]
+    models = ["agingregin18ie"]
+    for model_name in models:
+        if "agingregin" in model_name:
+            dp = "./data/test/agingreginIE"
+        else:
+            dp = "./data/test/agingIE/" + model_name[:2]
+        net_num = 18 if "18" in model_name else 50
+        t = Test()
+        t.run(model_name, dp, net_num)
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ def get_dataloaders(dp,batch_size):
     image_datasets, image_dataloaders = preprocessing.run(dp, net_num=net_num)
     samp_num = len(image_datasets)
     train_num, vaild_num = int(0.6 * samp_num), samp_num - int(0.6 * samp_num)
-    datasets["train"], datasets["valid"] = torch.utils.data.random_split(image_datasets, [train_num,vaild_num])
+    datasets["train"], datasets["valid"] = torch.utils.data.random_split(image_datasets, [train_num, vaild_num])
     dataloaders = {
         x: torch.utils.data.DataLoader(
             dataset=datasets[x], batch_size=batch_size, shuffle=True
@@ -99,14 +99,17 @@ def main():
     cate = "oe"
     aim = "agingregin"
     num_epochs = 200
-    dp = "./data/{}/agingregin".format(cate)
-    logging.basicConfig(filename='./logs/train_{0}_{1}_{2}.log'.format(aim, cate, net_num), level=logging.INFO)
-    dataloaders, class_num, train_num, vaild_num = get_dataloaders(dp, 8)
-    model = get_model(class_num)
-    logging.info('{} Started'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-    run(model, dataloaders, num_epochs, train_num, vaild_num)
+    for net_num in [18, 50]:
+        for cate in ["ie", "oe"]:
+            dp = "./data/{}/agingregin".format(cate)
+            logging.basicConfig(filename='./logs/train_{0}_{1}_{2}.log'.format(aim, cate, net_num), level=logging.INFO)
+            dataloaders, class_num, train_num, vaild_num = get_dataloaders(dp, 8)
+            model = get_model(class_num)
+            logging.info('{} Started'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            run(model, dataloaders, num_epochs, train_num, vaild_num)
+            logging.info('{} Finished'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+
 
 if __name__ == '__main__':
     main()
-    logging.info('{} Finished'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-
+    print("训练结束")
